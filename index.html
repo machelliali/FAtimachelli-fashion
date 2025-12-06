@@ -1111,9 +1111,7 @@
                 return;
             }
 
-            const newId = Math.max(...products.map(p => p.id), 0) + 1;
             const newProduct = {
-                id: newId,
                 name: name,
                 category: category,
                 price: price,
@@ -1122,7 +1120,7 @@
 
             const saved = await saveProductToCloud(newProduct);
             if (saved) {
-                products.push(newProduct);
+                await loadProductsFromCloud();
                 displayProducts();
                 displayProductsList();
 
