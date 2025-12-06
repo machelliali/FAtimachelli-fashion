@@ -948,7 +948,7 @@
     <script>
         const STORE_CONFIG = {
             ownerEmail: 'aliyumoha2003@gmail.com',
-            ownerWhatsApp: '233534815909',
+            ownerWhatsApp: '233505377939',
             storeName: 'Fashion Store',
             adminPassword: 'admin123'
         };
@@ -1305,7 +1305,7 @@
             }
         }
 
-        function submitOrder() {
+        async function submitOrder() {
             const name = document.getElementById('customerName').value;
             const phone = document.getElementById('customerPhone').value;
             const email = document.getElementById('customerEmail').value;
@@ -1327,37 +1327,39 @@
                 `${item.quantity}x ${item.name} - GH₵${item.price * item.quantity}`
             ).join('\n');
 
-            const emailBody = `
-New Order from ${STORE_CONFIG.storeName}
+            // Send email to store owner via formspree (no user action needed)
+            const formData = new FormData();
+            formData.append('_to', 'aliyumoha2003@gmail.com');
+            formData.append('_subject', `New Order from ${name}`);
+            formData.append('name', name);
+            formData.append('phone', phone);
+            formData.append('email', email);
+            formData.append('delivery_method', deliveryMethod.toUpperCase());
+            if (deliveryMethod === 'delivery') {
+                formData.append('address', address);
+            }
+            formData.append('order_details', orderDetails);
+            formData.append('total', `GH₵${total}`);
 
-Customer Details:
-Name: ${name}
-Phone: ${phone}
-Email: ${email}
-Delivery Method: ${deliveryMethod.toUpperCase()}
-${deliveryMethod === 'delivery' ? `Address: ${address}` : ''}
+            // Try to send email in background
+            try {
+                await fetch('https://formspree.io/f/xvgpzqqp', {
+                    method: 'POST',
+                    body: formData
+                });
+            } catch (error) {
+                console.log('Email service note:', error);
+            }
 
-Order Details:
-${orderDetails}
-
-Total: GH₵${total}
-
-Customer will contact you on WhatsApp for payment details.
-            `;
-
-            const mailtoLink = `mailto:${STORE_CONFIG.ownerEmail}?subject=New Order from ${name}&body=${encodeURIComponent(emailBody)}`;
-            window.location.href = mailtoLink;
-
-            const whatsappMessage = `Hi! I just placed an order on ${STORE_CONFIG.storeName}.\n\nOrder Total: GH₵${total}\nCustomer: ${name}\n\nPlease send me the account number for payment. Thank you!`;
+            // Immediately redirect to WhatsApp
+            const whatsappMessage = `Hi! I just placed an order on ${STORE_CONFIG.storeName}.\n\nCustomer Name: ${name}\nPhone: ${phone}\nEmail: ${email}\nDelivery Method: ${deliveryMethod.toUpperCase()}\n${deliveryMethod === 'delivery' ? `Address: ${address}\n` : ''}\nOrder Details:\n${orderDetails}\n\nTotal: GH₵${total}\n\nPlease send me the account number for payment. Thank you!`;
             const whatsappLink = `https://wa.me/${STORE_CONFIG.ownerWhatsApp}?text=${encodeURIComponent(whatsappMessage)}`;
 
-            setTimeout(() => {
-                window.open(whatsappLink, '_blank');
-                alert('Order submitted! You will be redirected to WhatsApp to get payment details.');
-                cart = [];
-                updateCartCount();
-                closeCart();
-            }, 1000);
+            window.open(whatsappLink, '_blank');
+            alert('✅ Order submitted! You will now be directed to WhatsApp to complete payment.');
+            cart = [];
+            updateCartCount();
+            closeCart();
         }
     </script>
 </body>
